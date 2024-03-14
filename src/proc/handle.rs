@@ -12,6 +12,7 @@ pub struct ProcHandle {
   changed: bool,
 
   proc: Proc,
+  exit_code: Option<i32>, // Add an attribute to store the exit code
 }
 
 impl ProcHandle {
@@ -23,7 +24,18 @@ impl ProcHandle {
       to_restart: false,
       changed: false,
       proc,
+      exit_code: None, // Initialize the exit code as None
     }
+  }
+
+  // Implement a method to set the exit code
+  pub fn set_exit_code(&mut self, code: i32) {
+    self.exit_code = Some(code);
+  }
+
+  // Implement a method to retrieve the exit code
+  pub fn exit_code(&self) -> Option<i32> {
+    self.exit_code
   }
 
   pub fn send(&mut self, cmd: ProcCmd) {
@@ -68,9 +80,7 @@ impl ProcHandle {
   pub fn focus(&mut self) {
     self.changed = false;
   }
-}
 
-impl ProcHandle {
   pub fn handle_event(&mut self, event: ProcEvent, selected: bool) {
     match event {
       ProcEvent::Render => {
@@ -78,8 +88,9 @@ impl ProcHandle {
           self.changed = true;
         }
       }
-      ProcEvent::Stopped => {
+      ProcEvent::Stopped => { // Modified to assume no exit code passed
         self.is_up = false;
+        // self.set_exit_code(exit_code); // Set the exit code when the process stops
         if self.to_restart {
           self.to_restart = false;
           self.send(ProcCmd::Start);
@@ -88,6 +99,7 @@ impl ProcHandle {
       ProcEvent::Started => {
         self.is_up = true;
       }
+      // Other event handling...
     }
   }
 }
